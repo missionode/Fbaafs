@@ -13,6 +13,11 @@
       border-radius: 10px;
       cursor: pointer;
       margin-top: 10px;
+      transition: background-color 0.3s ease;
+    }
+    button.selected {
+      background: #4CAF50;
+      color: #fff;
     }
     #status { color: #fff; margin-top: 10px; font-size: 18px; }
   </style>
@@ -120,6 +125,18 @@
     };
 
     function setGenderAttributes() {
+      // Highlight selected gender button
+      const maleBtn = document.getElementById('maleBtn');
+      const femaleBtn = document.getElementById('femaleBtn');
+      
+      if (userGender === 'male') {
+        maleBtn.classList.add('selected');
+        femaleBtn.classList.remove('selected');
+      } else {
+        femaleBtn.classList.add('selected');
+        maleBtn.classList.remove('selected');
+      }
+
       if (userGender === 'male') {
         // Male attracts female (use pink/golden aura)
         toggleBtn.textContent = 'Attract ON';
@@ -132,6 +149,10 @@
       stopFrequency();
     }
 
+    // Set Male as default gender when the page loads
+    window.onload = () => {
+      setGenderAttributes();
+    };
   </script>
 </body>
 </html>
