@@ -91,15 +91,17 @@
   </div>
   <div class="aura-glow" id="aura"></div>
   <div class="frequency-buttons">
-    <button data-frequency="528" data-label="Attract" class="active">Attract</button>
+    <button data-frequency="528" data-label="Attract">Attract</button>
     <button data-frequency="639" data-label="Connect">Connect</button>
     <button data-frequency="417" data-label="Cleanse">Cleanse</button>
     <button data-frequency="741" data-label="Express">Express</button>
     <button data-frequency="852" data-label="Awaken">Awaken</button>
   </div>
-  <div id="status">Attract mode active (528 Hz)</div>  <script>
-    let currentAudio = null;
-    const aura = document.getElementById('aura');
+  <div id="status">No frequency active</div>  <script>
+    let currentOscillator = null;
+    let currentContext = null;
+    let activeButton = null;
+
     const statusText = document.getElementById('status');
     const freqButtons = document.querySelectorAll('.frequency-buttons button');
     const maleBtn = document.getElementById('maleBtn');
@@ -115,33 +117,44 @@
       maleBtn.classList.remove('active');
     };
 
-    // Frequency play function
-    function playFrequency(freq, label) {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
+    function stopFrequency() {
+      if (currentOscillator && currentContext) {
+        currentOscillator.stop();
+        currentOscillator.disconnect();
+        currentOscillator = null;
+        currentContext.close();
+        currentContext = null;
       }
-      const context = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = context.createOscillator();
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(freq, context.currentTime);
-      oscillator.connect(context.destination);
-      oscillator.start();
-      currentAudio = oscillator;
+      if (activeButton) activeButton.classList.remove('active');
+      activeButton = null;
+      statusText.innerText = 'No frequency active';
+    }
 
-      // Stop sound after long duration or on new click
-      setTimeout(() => oscillator.stop(), 10000);
+    function playFrequency(freq, label, button) {
+      if (activeButton === button) {
+        stopFrequency();
+        return;
+      }
+
+      stopFrequency();
+
+      currentContext = new (window.AudioContext || window.webkitAudioContext)();
+      currentOscillator = currentContext.createOscillator();
+      currentOscillator.type = 'sine';
+      currentOscillator.frequency.setValueAtTime(freq, currentContext.currentTime);
+      currentOscillator.connect(currentContext.destination);
+      currentOscillator.start();
+
+      activeButton = button;
+      activeButton.classList.add('active');
       statusText.innerText = `${label} mode active (${freq} Hz)`;
     }
 
-    // Frequency button click
     freqButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        freqButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         const freq = parseInt(btn.dataset.frequency);
         const label = btn.dataset.label;
-        playFrequency(freq, label);
+        playFrequency(freq, label, btn);
       });
     });
   </script></body>
