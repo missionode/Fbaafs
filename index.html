@@ -1,182 +1,148 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-  <title>Magnetize Aura</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mystical Aura App</title>
   <style>
-    body { margin: 0; background: #000; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: Arial, sans-serif; }
-    canvas { border-radius: 50%; background: radial-gradient(circle, #222, #000); margin-top: 20px; }
-    button {
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #0f0c29, #302b63, #24243e);
+      color: white;
+      min-height: 100vh;
+    }
+    .gender-toggle {
+      margin: 20px;
+    }
+    .gender-toggle button {
       padding: 10px 20px;
-      font-size: 18px;
-      background: #fff;
-      border: none;
-      border-radius: 10px;
+      margin: 0 10px;
+      background: none;
+      border: 2px solid white;
+      color: white;
       cursor: pointer;
-      margin-top: 10px;
-      transition: background-color 0.3s ease;
+      border-radius: 20px;
+      transition: all 0.3s;
     }
-    button.selected {
-      background: #4CAF50;
+    .gender-toggle .active {
+      background: #ffffff33;
+      box-shadow: 0 0 10px #fff;
+    }
+    .frequency-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px;
+    }
+    .frequency-buttons button {
+      padding: 12px 24px;
+      background: #222;
       color: #fff;
+      border: 2px solid #fff;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
     }
-    #status { color: #fff; margin-top: 10px; font-size: 18px; }
+    .frequency-buttons .active {
+      background: #ff9d00;
+      box-shadow: 0 0 15px #ff9d00, 0 0 30px #ff9d00aa;
+    }
+    #status {
+      margin: 20px;
+      font-size: 18px;
+      text-align: center;
+      text-shadow: 0 0 5px #fff;
+    }
+    .aura-glow {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff44 10%, transparent 70%);
+      animation: pulse 2s infinite ease-in-out;
+      margin: 20px;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .hidden { display: none; }
     @media (max-width: 600px) {
-  canvas {
-    width: 90vw;
-    height: 90vw;
-  }
-
-  button {
-    font-size: 16px;
-    padding: 8px 16px;
-    margin: 5px;
-  }
-
-  #status {
-    font-size: 16px;
-    text-align: center;
-    padding: 0 10px;
-  }
-
-  body {
-    justify-content: flex-start;
-    padding-top: 20px;
-  }
+      .frequency-buttons {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .aura-glow {
+        width: 150px;
+        height: 150px;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Gender Selection -->
-  <div>
-    <button id="maleBtn">I Am Male</button>
-    <button id="femaleBtn">I Am Female</button>
+  <div class="gender-toggle">
+    <button id="maleBtn" class="active">I am Male</button>
+    <button id="femaleBtn">I am Female</button>
   </div>
-  
-  <!-- Attract Toggle -->
-  <button id="toggleBtn">Attract ON</button>
-  <p id="status">Attract Mode: OFF</p>
-
-  <!-- Canvas for Aura Display -->
-  <canvas id="auraCanvas" width="400" height="400"></canvas>
-
-  <script>
-    const canvas = document.getElementById('auraCanvas');
-    const ctx = canvas.getContext('2d');
+  <div class="aura-glow" id="aura"></div>
+  <div class="frequency-buttons">
+    <button data-frequency="528" data-label="Attract" class="active">Attract</button>
+    <button data-frequency="639" data-label="Connect">Connect</button>
+    <button data-frequency="417" data-label="Cleanse">Cleanse</button>
+    <button data-frequency="741" data-label="Express">Express</button>
+    <button data-frequency="852" data-label="Awaken">Awaken</button>
+  </div>
+  <div id="status">Attract mode active (528 Hz)</div>  <script>
+    let currentAudio = null;
+    const aura = document.getElementById('aura');
     const statusText = document.getElementById('status');
-    const toggleBtn = document.getElementById('toggleBtn');
-    let particles = [];
-    let mode = 'attract'; // Default attraction
-    let userGender = 'male'; // Default gender
-
-    // Generate particles
-    for (let i = 0; i < 100; i++) {
-      particles.push({
-        x: Math.random() * 400,
-        y: Math.random() * 400,
-        dx: (Math.random() - 0.5) * 1.5,
-        dy: (Math.random() - 0.5) * 1.5
-      });
-    }
-
-    // Create Audio Context for playing frequency
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    let oscillator;
-
-    function playFrequency(frequency) {
-      if (oscillator) oscillator.stop(); // Stop any existing frequency
-      oscillator = audioContext.createOscillator();
-      oscillator.type = 'sine'; // Sine wave for a pure tone
-      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      oscillator.connect(audioContext.destination);
-      oscillator.start();
-    }
-
-    function stopFrequency() {
-      if (oscillator) oscillator.stop();
-    }
-
-    function drawParticles() {
-      ctx.clearRect(0, 0, 400, 400);
-
-      for (let p of particles) {
-        const cx = 200, cy = 200;
-        let angle = Math.atan2(cy - p.y, cx - p.x);
-        let force = 0.5;
-
-        if (mode === 'attract') {
-          p.x += Math.cos(angle) * force;
-          p.y += Math.sin(angle) * force;
-        } else {
-          // No movement in 'OFF' state
-        }
-
-        // Draw particle with color based on gender
-        let color = (userGender === 'male' && mode === 'attract') ? '#ffcc00' : (userGender === 'female' && mode === 'attract') ? '#66ccff' : '#ffffff';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-      }
-
-      requestAnimationFrame(drawParticles);
-    }
-
-    drawParticles();
-
-    // Toggle attraction mode
-    toggleBtn.onclick = () => {
-      mode = (mode === 'attract') ? 'off' : 'attract';
-      toggleBtn.textContent = mode === 'attract' ? 'Attract OFF' : 'Attract ON';
-      statusText.textContent = `Attract Mode: ${mode === 'attract' ? 'ON' : 'OFF'}`;
-      
-      if (mode === 'attract') {
-        playFrequency(userGender === 'male' ? 528 : 639); // 528 Hz for Male -> Female, 639 Hz for Female -> Male
-      } else {
-        stopFrequency();
-      }
-    };
+    const freqButtons = document.querySelectorAll('.frequency-buttons button');
+    const maleBtn = document.getElementById('maleBtn');
+    const femaleBtn = document.getElementById('femaleBtn');
 
     // Gender toggle
-    document.getElementById('maleBtn').onclick = () => {
-      userGender = 'male';
-      setGenderAttributes();
+    maleBtn.onclick = () => {
+      maleBtn.classList.add('active');
+      femaleBtn.classList.remove('active');
+    };
+    femaleBtn.onclick = () => {
+      femaleBtn.classList.add('active');
+      maleBtn.classList.remove('active');
     };
 
-    document.getElementById('femaleBtn').onclick = () => {
-      userGender = 'female';
-      setGenderAttributes();
-    };
-
-    function setGenderAttributes() {
-      // Highlight selected gender button
-      const maleBtn = document.getElementById('maleBtn');
-      const femaleBtn = document.getElementById('femaleBtn');
-      
-      if (userGender === 'male') {
-        maleBtn.classList.add('selected');
-        femaleBtn.classList.remove('selected');
-      } else {
-        femaleBtn.classList.add('selected');
-        maleBtn.classList.remove('selected');
+    // Frequency play function
+    function playFrequency(freq, label) {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
       }
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = context.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, context.currentTime);
+      oscillator.connect(context.destination);
+      oscillator.start();
+      currentAudio = oscillator;
 
-      if (userGender === 'male') {
-        // Male attracts female (use pink/golden aura)
-        toggleBtn.textContent = 'Attract ON';
-      } else {
-        // Female attracts male (use blue/silver aura)
-        toggleBtn.textContent = 'Attract ON';
-      }
-      statusText.textContent = `Attract Mode: OFF`;
-      mode = 'off'; // Default to off when gender is selected
-      stopFrequency();
+      // Stop sound after long duration or on new click
+      setTimeout(() => oscillator.stop(), 10000);
+      statusText.innerText = `${label} mode active (${freq} Hz)`;
     }
 
-    // Set Male as default gender when the page loads
-    window.onload = () => {
-      setGenderAttributes();
-    };
-  </script>
-</body>
+    // Frequency button click
+    freqButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        freqButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const freq = parseInt(btn.dataset.frequency);
+        const label = btn.dataset.label;
+        playFrequency(freq, label);
+      });
+    });
+  </script></body>
 </html>
