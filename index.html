@@ -1,98 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aura Frequencies</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura Frequency App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: white;
-      text-align: center;
-      padding: 2rem;
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: url('https://images.unsplash.com/photo-1581291519195-ef11498d1cf5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
     h1 {
+      font-size: 2rem;
       margin-bottom: 1rem;
+      text-shadow: 0 0 8px #f0f;
     }
-    .button-group {
-      margin: 1rem 0;
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      align-items: center;
     }
     button {
-      margin: 0.5rem;
       padding: 1rem 2rem;
-      font-size: 1rem;
       border: none;
-      border-radius: 10px;
+      border-radius: 30px;
+      font-size: 1.2rem;
       cursor: pointer;
-      transition: background 0.3s;
+      background: rgba(255, 0, 128, 0.8);
+      color: white;
+      box-shadow: 0 0 15px rgba(255, 0, 128, 0.6);
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: rgba(255, 0, 128, 1);
+      transform: scale(1.05);
     }
     .active {
-      border: 2px solid yellow;
+      background: rgba(0, 255, 128, 0.8);
+      box-shadow: 0 0 15px rgba(0, 255, 128, 0.6);
     }
-    .stop {
-      background-color: crimson;
-      color: white;
-    }
-    @media (max-width: 600px) {
-      button {
-        width: 90%;
-        margin: 0.5rem auto;
-        display: block;
-      }
+    .status {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      text-shadow: 0 0 6px #fff;
     }
   </style>
 </head>
 <body>
-  <h1>Aura Frequency Tuner</h1>
-
-  <div class="button-group">
-    <button onclick="toggleFrequency('attract', 528)">Attract</button>
-    <button onclick="toggleFrequency('communicate', 639)">Communicate</button>
-    <button onclick="toggleFrequency('connect', 741)">Connect</button>
-    <button onclick="toggleFrequency('cleanse', 417)">Cleanse</button>
-    <button class="stop" onclick="stopAll()">Stop</button>
+  <h1>Mystical Aura Tuner</h1>
+  <div class="controls">
+    <button id="attractBtn">Attract (528 Hz)</button>
+    <button id="communicateBtn">Communicate (639 Hz)</button>
+    <button id="cleanseBtn">Cleanse (417 Hz)</button>
+    <button id="stopBtn">Stop All</button>
   </div>
+  <div class="status" id="statusText">No frequency playing</div><audio id="attractAudio" src="https://cdn.pixabay.com/audio/2022/03/25/audio_7b6bfb6f4f.mp3"></audio> <audio id="communicateAudio" src="https://cdn.pixabay.com/audio/2022/03/22/audio_0d23edc212.mp3"></audio> <audio id="cleanseAudio" src="https://cdn.pixabay.com/audio/2022/03/29/audio_93e6f3d1d8.mp3"></audio>
 
   <script>
-    let currentOscillator = null;
-    let currentButton = null;
+    const attractBtn = document.getElementById('attractBtn');
+    const communicateBtn = document.getElementById('communicateBtn');
+    const cleanseBtn = document.getElementById('cleanseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusText = document.getElementById('statusText');
 
-    function playFrequency(freq) {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = freq;
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.start();
-      return { oscillator, audioCtx };
+    const audios = {
+      attract: document.getElementById('attractAudio'),
+      communicate: document.getElementById('communicateAudio'),
+      cleanse: document.getElementById('cleanseAudio'),
+    };
+
+    let active = null;
+
+    function play(id, label) {
+      stopAll();
+      audios[id].play();
+      active = id;
+      document.getElementById(id + 'Btn').classList.add('active');
+      statusText.innerText = `Now resonating: ${label}`;
     }
 
     function stopAll() {
-      if (currentOscillator) {
-        currentOscillator.oscillator.stop();
-        currentOscillator.audioCtx.close();
-        currentOscillator = null;
+      for (const key in audios) {
+        audios[key].pause();
+        audios[key].currentTime = 0;
+        document.getElementById(key + 'Btn').classList.remove('active');
       }
-      if (currentButton) {
-        currentButton.classList.remove('active');
-        currentButton = null;
-      }
+      statusText.innerText = 'No frequency playing';
+      active = null;
     }
 
-    function toggleFrequency(name, freq) {
-      const button = event.target;
-      if (currentButton === button) {
-        stopAll();
-      } else {
-        stopAll();
-        currentOscillator = playFrequency(freq);
-        currentButton = button;
-        button.classList.add('active');
-      }
-    }
-  </script>
-</body>
+    attractBtn.addEventListener('click', () => {
+      if (active === 'attract') stopAll();
+      else play('attract', '528 Hz – Attraction');
+    });
+
+    communicateBtn.addEventListener('click', () => {
+      if (active === 'communicate') stopAll();
+      else play('communicate', '639 Hz – Communication');
+    });
+
+    cleanseBtn.addEventListener('click', () => {
+      if (active === 'cleanse') stopAll();
+      else play('cleanse', '417 Hz – Cleansing');
+    });
+
+    stopBtn.addEventListener('click', stopAll);
+  </script></body>
 </html>
